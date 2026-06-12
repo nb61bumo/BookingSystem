@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Büro Buchungssystem</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f8f9fa;color:#1a1a1a;min-height:100vh}
+.app{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;gap:8px}
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid #e0e0e0;padding-bottom:0}
+.tab{padding:8px 16px;cursor:pointer;font-size:14px;border:none;background:none;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a;font-weight:500}
+.week-nav{display:flex;align-items:center;gap:12px;margin-bottom:1rem}
+.week-nav button{background:#fff;border:1px solid #ddd;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px}
+.week-nav button:hover{background:#f0f0f0}
+.week-label{font-size:14px;font-weight:500;flex:1;text-align:center}
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px;text-align:center}
+.stat-num{font-size:16px;font-weight:500}
+.stat-label{font-size:11px;color:#888;margin-top:2px}
+.stat.today{border-color:#378ADD}
+.legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+.day-cols{display:grid;grid-template-columns:130px repeat(5,1fr);gap:0;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
+.day-header{padding:8px 6px;text-align:center;font-size:12px;font-weight:500;background:#f5f5f5;border-bottom:1px solid #e0e0e0;color:#555}
+.day-header.today{color:#185FA5;background:#E6F1FB}
+.room-label{padding:8px 10px;font-size:12px;font-weight:500;background:#fafafa;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;gap:6px;color:#555}
+.cell{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:4px;display:flex;flex-wrap:wrap;gap:3px;min-height:58px;align-content:flex-start}
+.desk-slot{width:22px;height:22px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1px solid transparent}
+.desk-free{background:#f0f0f0;border-color:#ddd;color:#aaa}
+.desk-free:hover{background:#dbeeff;border-color:#378ADD}
+.desk-taken{cursor:pointer}
+.desk-taken:hover{opacity:0.75}
+.conf-grid{display:grid;grid-template-columns:90px repeat(5,1fr);gap:0;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
+.conf-time{padding:6px 8px;border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;font-size:11px;color:#888;background:#fafafa;display:flex;align-items:center}
+.conf-slot{padding:4px 6px;border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;font-size:11px;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;color:#555}
+.conf-slot:hover{background:#f5f5f5}
+.conf-booked{background:#E6F1FB;color:#0C447C;cursor:pointer;font-weight:500}
+.conf-booked:hover{background:#B5D4F4}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:1rem}
+.modal input{width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:10px}
+.modal input:focus{outline:none;border-color:#378ADD}
+.modal-btns{display:flex;gap:8px}
+.btn-primary{flex:1;padding:8px;background:#185FA5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.btn-primary:hover{background:#0C447C}
+.btn-secondary{flex:1;padding:8px;background:#fff;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:13px}
+.btn-danger{flex:1;padding:8px;background:#A32D2D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.toast.show{opacity:1}
+.config-bar{background:#fffbe6;border:1px solid #f0d060;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.config-bar input{flex:1;min-width:200px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px}
+.config-bar button{padding:6px 12px;background:#185FA5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap}
+.loading{text-align:center;padding:2rem;color:#888;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1><i class="ti ti-building-office" aria-hidden="true"></i> Büro Buchungssystem</h1>
+
+  <div class="config-bar" id="config-bar">
+    <span>⚙️ Apps Script URL eingeben:</span>
+    <input type="text" id="api-url-input" placeholder="https://script.google.com/macros/s/DEINE_ID/exec" />
+    <button onclick="saveApiUrl()">Speichern</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('desks',this)"><i class="ti ti-armchair" aria-hidden="true"></i> Schreibtische</button>
+    <button class="tab" onclick="switchTab('conf',this)"><i class="ti ti-presentation" aria-hidden="true"></i> Konferenzraum</button>
+  </div>
+
+  <div id="tab-desks">
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+      <span class="week-label" id="week-label"></span>
+      <button onclick="changeWeek(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#e0e0e0;border:1px solid #ccc"></div>Frei</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#9FE1CB"></div>Büro 1</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#B5D4F4"></div>Büro 2</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FAC775"></div>Büro 3</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#F4C0D1"></div>Büro 4</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#C0DD97"></div>Büro 5</div>
+    </div>
+    <div id="desk-grid" class="day-cols"></div>
+  </div>
+
+  <div id="tab-conf" style="display:none">
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+      <span class="week-label" id="week-label-conf"></span>
+      <button onclick="changeWeek(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="conf-grid" id="conf-grid"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal" style="display:none" onclick="bgClose(event)">
+  <div class="modal">
+    <h3 id="modal-title">Platz buchen</h3>
+    <input type="text" id="modal-name" placeholder="Dein Name" maxlength="30" />
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" id="btn-book" onclick="confirmBook()">Buchen</button>
+      <button class="btn-danger" id="btn-cancel" style="display:none" onclick="cancelBook()">Stornieren</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ROOMS=[
+  {name:"Büro 1",desks:4,color:"#9FE1CB",tc:"#085041"},
+  {name:"Büro 2",desks:4,color:"#B5D4F4",tc:"#0C447C"},
+  {name:"Büro 3",desks:4,color:"#FAC775",tc:"#633806"},
+  {name:"Büro 4",desks:4,color:"#F4C0D1",tc:"#72243E"},
+  {name:"Büro 5",desks:3,color:"#C0DD97",tc:"#27500A"}
+];
+const DAYS=["Mo","Di","Mi","Do","Fr"];
+const TIMES=["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+let weekOffset=0;
+let bookings={};
+let confBookings={};
+let pending=null;
+let currentTab='desks';
+let API_URL=localStorage.getItem('booking_api_url')||'';
+
+if(API_URL){
+  document.getElementById('api-url-input').value=API_URL;
+  document.getElementById('config-bar').style.display='none';
+  loadBookings();
+}
+
+function saveApiUrl(){
+  const v=document.getElementById('api-url-input').value.trim();
+  if(!v){toast('Bitte URL eingeben');return;}
+  API_URL=v;
+  localStorage.setItem('booking_api_url',v);
+  document.getElementById('config-bar').style.display='none';
+  loadBookings();
+}
+
+async function loadBookings(){
+  if(!API_URL){return;}
+  try{
+    const r=await fetch(API_URL+'?action=getAll');
+    const d=await r.json();
+    bookings={};confBookings={};
+    (d.bookings||[]).forEach(b=>{
+      bookings[b.key]=b.name;
+    });
+    (d.confBookings||[]).forEach(b=>{
+      confBookings[b.key]=b.name;
+    });
+    renderDesks();
+    if(currentTab==='conf')renderConf();
+  }catch(e){
+    toast('Verbindung fehlgeschlagen – lokaler Modus aktiv');
+    renderDesks();
+  }
+}
+
+async function apiWrite(action,key,name){
+  if(!API_URL)return;
+  try{
+    await fetch(API_URL,{
+      method:'POST',
+      body:JSON.stringify({action,key,name}),
+      headers:{'Content-Type':'application/json'}
+    });
+  }catch(e){toast('Speichern fehlgeschlagen');}
+}
+
+function getMonday(offset){
+  const d=new Date();
+  const day=d.getDay();
+  d.setDate(d.getDate()-(day===0?6:day-1)+offset*7);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function dateKey(base,i){
+  const d=new Date(base);d.setDate(d.getDate()+i);
+  return d.toISOString().slice(0,10);
+}
+function formatWeek(mon){
+  const fri=new Date(mon);fri.setDate(fri.getDate()+4);
+  const f=d=>d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+  return f(mon)+" – "+f(fri)+" "+fri.getFullYear();
+}
+function isToday(base,i){
+  const d=new Date(base);d.setDate(d.getDate()+i);
+  return d.toDateString()===new Date().toDateString();
+}
+function isAllowed(offset){return offset===0||offset===1;}
+
+function renderDesks(){
+  const mon=getMonday(weekOffset);
+  document.getElementById('week-label').textContent=formatWeek(mon);
+  if(!isAllowed(weekOffset)){
+    document.getElementById('desk-grid').innerHTML='<div class="loading">Buchungen nur für diese und nächste Woche möglich.</div>';
+    document.getElementById('stats-bar').innerHTML='';
+    return;
+  }
+  let h='<div class="day-header"></div>';
+  DAYS.forEach((d,i)=>{
+    const t=isToday(mon,i);
+    h+=`<div class="day-header${t?' today':''}">${d}<br><span style="font-size:10px">${new Date(dateKey(mon,i)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</span></div>`;
+  });
+  ROOMS.forEach((room,ri)=>{
+    h+=`<div class="room-label"><span style="width:8px;height:8px;border-radius:50%;background:${room.color};display:inline-block;flex-shrink:0"></span>${room.name}</div>`;
+    DAYS.forEach((_,di)=>{
+      const dk=dateKey(mon,di);
+      h+=`<div class="cell">`;
+      for(let desk=0;desk<room.desks;desk++){
+        const bk=`${dk}_r${ri}_d${desk}`;
+        const b=bookings[bk];
+        if(b){
+          h+=`<div class="desk-slot desk-taken" style="background:${room.color};color:${room.tc}" title="${b}" onclick="openCancel('${bk}','${b}','${room.name} P${desk+1}')">${b.slice(0,2).toUpperCase()}</div>`;
+        }else{
+          h+=`<div class="desk-slot desk-free" title="Frei" onclick="openBook('${bk}','${room.name} Platz ${desk+1}')"></div>`;
+        }
+      }
+      h+='</div>';
+    });
+  });
+  document.getElementById('desk-grid').innerHTML=h;
+
+  let sh='';
+  DAYS.forEach((d,di)=>{
+    const dk=dateKey(mon,di);
+    let total=0,booked=0;
+    ROOMS.forEach((room,ri)=>{
+      total+=room.desks;
+      for(let desk=0;desk<room.desks;desk++){if(bookings[`${dk}_r${ri}_d${desk}`])booked++;}
+    });
+    const t=isToday(mon,di);
+    sh+=`<div class="stat${t?' today':''}"><div class="stat-num">${booked}/${total}</div><div class="stat-label">${d}${t?' · heute':''}</div></div>`;
+  });
+  document.getElementById('stats-bar').innerHTML=sh;
+}
+
+function renderConf(){
+  const mon=getMonday(weekOffset);
+  document.getElementById('week-label-conf').textContent=formatWeek(mon);
+  if(!isAllowed(weekOffset)){
+    document.getElementById('conf-grid').innerHTML='<div class="loading">Buchungen nur für diese und nächste Woche möglich.</div>';
+    return;
+  }
+  let h='<div class="conf-time"></div>';
+  DAYS.forEach((d,i)=>{
+    const t=isToday(mon,i);
+    h+=`<div class="day-header${t?' today':''}" style="border-right:1px solid #e0e0e0">${d}<br><span style="font-size:10px">${new Date(dateKey(mon,i)).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}</span></div>`;
+  });
+  TIMES.forEach(time=>{
+    h+=`<div class="conf-time">${time}</div>`;
+    DAYS.forEach((_,di)=>{
+      const dk=dateKey(mon,di);
+      const ck=`conf_${dk}_${time}`;
+      const b=confBookings[ck];
+      if(b){
+        h+=`<div class="conf-slot conf-booked" onclick="openCancelConf('${ck}','${b}','${time}')">${b}</div>`;
+      }else{
+        h+=`<div class="conf-slot" onclick="openBookConf('${ck}','${time}, ${d}')"></div>`;
+      }
+    });
+  });
+  document.getElementById('conf-grid').innerHTML=h;
+}
+
+function switchTab(t,el){
+  currentTab=t;
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-desks').style.display=t==='desks'?'':'none';
+  document.getElementById('tab-conf').style.display=t==='conf'?'':'none';
+  if(t==='conf')renderConf();
+}
+function changeWeek(d){
+  const next=weekOffset+d;
+  if(next<0||next>1){toast('Nur aktuelle und nächste Woche buchbar');return;}
+  weekOffset=next;
+  renderDesks();
+  if(currentTab==='conf')renderConf();
+}
+
+function openBook(key,label){
+  pending={type:'book',key,label};
+  document.getElementById('modal-title').textContent=label+' buchen';
+  document.getElementById('modal-name').value='';
+  document.getElementById('btn-book').style.display='';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('modal-name').focus(),50);
+}
+function openCancel(key,name,label){
+  pending={type:'cancel',key,name,label};
+  document.getElementById('modal-title').textContent=`${label} – ${name}`;
+  document.getElementById('modal-name').value=name;
+  document.getElementById('btn-book').style.display='none';
+  document.getElementById('btn-cancel').style.display='';
+  document.getElementById('modal').style.display='flex';
+}
+function openBookConf(key,label){
+  pending={type:'bookConf',key,label};
+  document.getElementById('modal-title').textContent='Konferenzraum: '+label;
+  document.getElementById('modal-name').value='';
+  document.getElementById('btn-book').style.display='';
+  document.getElementById('btn-cancel').style.display='none';
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('modal-name').focus(),50);
+}
+function openCancelConf(key,name,label){
+  pending={type:'cancelConf',key,name,label};
+  document.getElementById('modal-title').textContent=`Konferenzraum ${label} – ${name}`;
+  document.getElementById('modal-name').value=name;
+  document.getElementById('btn-book').style.display='none';
+  document.getElementById('btn-cancel').style.display='';
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){document.getElementById('modal').style.display='none';pending=null;}
+function bgClose(e){if(e.target===document.getElementById('modal'))closeModal();}
+
+async function confirmBook(){
+  const name=document.getElementById('modal-name').value.trim();
+  if(!name){toast('Bitte Namen eingeben');return;}
+  if(pending.type==='book'){
+    bookings[pending.key]=name;
+    await apiWrite('book',pending.key,name);
+    renderDesks();
+    toast('Platz gebucht!');
+  }else if(pending.type==='bookConf'){
+    confBookings[pending.key]=name;
+    await apiWrite('book',pending.key,name);
+    renderConf();
+    toast('Konferenzraum reserviert!');
+  }
+  closeModal();
+}
+async function cancelBook(){
+  if(pending.type==='cancel'){
+    delete bookings[pending.key];
+    await apiWrite('cancel',pending.key,'');
+    renderDesks();
+    toast('Buchung storniert');
+  }else if(pending.type==='cancelConf'){
+    delete confBookings[pending.key];
+    await apiWrite('cancel',pending.key,'');
+    renderConf();
+    toast('Reservierung storniert');
+  }
+  closeModal();
+}
+
+document.getElementById('modal-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmBook();});
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+renderDesks();
+</script>
+</body>
+</html>
