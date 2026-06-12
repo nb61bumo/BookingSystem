@@ -132,13 +132,9 @@ let bookings={};
 let confBookings={};
 let pending=null;
 let currentTab='desks';
-let API_URL=localStorage.getItem('booking_api_url')||'';
-
-if(API_URL){
-  document.getElementById('api-url-input').value=API_URL;
-  document.getElementById('config-bar').style.display='none';
-  loadBookings();
-}
+let API_URL='https://script.google.com/macros/s/AKfycbx7fT-GrnBiSDx8gLCz4ydjVGeNV67r2pBUvjG_X4uD9sjsWGK22M1QLSWQQ_wNfBM6dg/exec';
+document.getElementById('config-bar').style.display='none';
+loadBookings();
 
 function saveApiUrl(){
   const v=document.getElementById('api-url-input').value.trim();
@@ -182,14 +178,18 @@ async function apiWrite(action,key,name){
 
 function getMonday(offset){
   const d=new Date();
-  const day=d.getDay();
-  d.setDate(d.getDate()-(day===0?6:day-1)+offset*7);
   d.setHours(0,0,0,0);
+  const day=d.getDay();
+  const diff=day===0?-6:day===6?-5:1-day;
+  d.setDate(d.getDate()+diff+offset*7);
   return d;
 }
 function dateKey(base,i){
   const d=new Date(base);d.setDate(d.getDate()+i);
-  return d.toISOString().slice(0,10);
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
 }
 function formatWeek(mon){
   const fri=new Date(mon);fri.setDate(fri.getDate()+4);
