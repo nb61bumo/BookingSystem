@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f8f9fa;color:#1a1a1a;min-height:100vh}
-.app{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+.app{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
 h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;gap:8px}
 .tabs{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid #e0e0e0;padding-bottom:0}
 .tab{padding:8px 16px;cursor:pointer;font-size:14px;border:none;background:none;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px}
@@ -22,25 +22,42 @@ h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:
 .stat-num{font-size:16px;font-weight:500}
 .stat-label{font-size:11px;color:#888;margin-top:2px}
 .stat.today{border-color:#378ADD}
-.legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+.legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#666}
 .legend-dot{width:12px;height:12px;border-radius:3px}
-.day-cols{display:grid;grid-template-columns:130px repeat(5,1fr);gap:0;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
+.window-legend{width:24px;height:5px;background:#a8d8f0;border-radius:2px}
+.day-scroll{overflow-x:auto}
+.day-cols{display:grid;grid-template-columns:120px repeat(5,1fr);min-width:640px;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
 .day-header{padding:8px 6px;text-align:center;font-size:12px;font-weight:500;background:#f5f5f5;border-bottom:1px solid #e0e0e0;color:#555}
 .day-header.today{color:#185FA5;background:#E6F1FB}
 .room-label{padding:8px 10px;font-size:12px;font-weight:500;background:#fafafa;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;gap:6px;color:#555}
-.cell{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:4px;display:flex;flex-wrap:wrap;gap:3px;min-height:58px;align-content:flex-start}
-.desk-slot{width:22px;height:22px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;border:1px solid transparent}
-.desk-free{background:#f0f0f0;border-color:#ddd;color:#aaa}
+.cell{border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;padding:6px;display:flex;align-items:center;justify-content:center;min-height:80px}
+.cell:last-child{border-right:none}
+
+/* Office layout */
+.office-box{position:relative;width:80px;height:72px}
+.win{position:absolute;background:#a8d8f0;border-radius:2px;z-index:1}
+.win.top{top:0;left:15%;width:70%;height:4px}
+.win.bottom{bottom:0;left:15%;width:70%;height:4px}
+.win.left{left:0;top:15%;height:70%;width:4px}
+.win.right{right:0;top:15%;height:70%;width:4px}
+.desks{position:absolute;inset:7px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px}
+.desk{border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;border:1.5px solid transparent;transition:opacity 0.15s}
+.desk-free{background:#ececec;border-color:#d0d0d0;color:#aaa}
 .desk-free:hover{background:#dbeeff;border-color:#378ADD}
 .desk-taken{cursor:pointer}
-.desk-taken:hover{opacity:0.75}
+.desk-taken:hover{opacity:0.72}
+.desk-phantom{background:transparent;border:none;pointer-events:none;cursor:default}
+
+/* Conference room */
 .conf-grid{display:grid;grid-template-columns:90px repeat(5,1fr);gap:0;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
 .conf-time{padding:6px 8px;border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;font-size:11px;color:#888;background:#fafafa;display:flex;align-items:center}
 .conf-slot{padding:4px 6px;border-bottom:1px solid #e0e0e0;border-right:1px solid #e0e0e0;font-size:11px;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;color:#555}
 .conf-slot:hover{background:#f5f5f5}
 .conf-booked{background:#E6F1FB;color:#0C447C;cursor:pointer;font-weight:500}
 .conf-booked:hover{background:#B5D4F4}
+
+/* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100}
 .modal{background:#fff;border-radius:12px;padding:1.5rem;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.12)}
 .modal h3{font-size:15px;font-weight:500;margin-bottom:1rem}
@@ -53,7 +70,7 @@ h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:
 .btn-danger{flex:1;padding:8px;background:#A32D2D;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none}
 .toast.show{opacity:1}
-.loading{text-align:center;padding:2rem;color:#888;font-size:14px}
+.loading{text-align:center;padding:2rem;color:#888;font-size:14px;grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -73,14 +90,15 @@ h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:
     </div>
     <div class="stats-bar" id="stats-bar"></div>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#e0e0e0;border:1px solid #ccc"></div>Free</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ececec;border:1px solid #ccc"></div>Free</div>
       <div class="legend-item"><div class="legend-dot" style="background:#9FE1CB"></div>Office 1</div>
       <div class="legend-item"><div class="legend-dot" style="background:#B5D4F4"></div>Office 2</div>
       <div class="legend-item"><div class="legend-dot" style="background:#FAC775"></div>Office 3</div>
       <div class="legend-item"><div class="legend-dot" style="background:#F4C0D1"></div>Office 4</div>
       <div class="legend-item"><div class="legend-dot" style="background:#C0DD97"></div>Office 5</div>
+      <div class="legend-item"><div class="window-legend"></div>Window</div>
     </div>
-    <div id="desk-grid" class="day-cols"></div>
+    <div class="day-scroll"><div class="day-cols" id="desk-grid"></div></div>
   </div>
 
   <div id="tab-conf" style="display:none">
@@ -104,26 +122,23 @@ h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
+// Desk order: [top-left, top-right, bottom-left, bottom-right]
+// For office 5 (3 desks, 2 top + 1 bottom-left): slots = [0,1,2,null]
 const ROOMS=[
-  {name:"Office 1",desks:4,color:"#9FE1CB",tc:"#085041"},
-  {name:"Office 2",desks:4,color:"#B5D4F4",tc:"#0C447C"},
-  {name:"Office 3",desks:4,color:"#FAC775",tc:"#633806"},
-  {name:"Office 4",desks:4,color:"#F4C0D1",tc:"#72243E"},
-  {name:"Office 5",desks:3,color:"#C0DD97",tc:"#27500A"}
+  {name:"Office 1",desks:4,color:"#9FE1CB",tc:"#085041",window:"top"},
+  {name:"Office 2",desks:4,color:"#B5D4F4",tc:"#0C447C",window:"top"},
+  {name:"Office 3",desks:4,color:"#FAC775",tc:"#633806",window:"top"},
+  {name:"Office 4",desks:4,color:"#F4C0D1",tc:"#72243E",window:"top"},
+  {name:"Office 5",desks:3,color:"#C0DD97",tc:"#27500A",window:"top"}
 ];
 const DAYS=["Mon","Tue","Wed","Thu","Fri"];
 const TIMES=["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
 
-let weekOffset=0;
-let bookings={};
-let confBookings={};
-let pending=null;
-let currentTab='desks';
-let API_URL='https://script.google.com/macros/s/AKfycbxZwuywumRpGjF9ZBHYQ3zZEJmtwinzbUyn2vXweWIOFlYRKRi7eT5pjKorRV5q-JPF4A/exec';
+let weekOffset=0,bookings={},confBookings={},pending=null,currentTab='desks';
+const API_URL='https://script.google.com/macros/s/AKfycbxZwuywumRpGjF9ZBHYQ3zZEJmtwinzbUyn2vXweWIOFlYRKRi7eT5pjKorRV5q-JPF4A/exec';
 loadBookings();
 
 async function loadBookings(){
@@ -131,36 +146,27 @@ async function loadBookings(){
     const r=await fetch(API_URL+'?action=getAll');
     const d=await r.json();
     bookings={};confBookings={};
-    (d.bookings||[]).forEach(b=>{bookings[b.key]=b.name;});
-    (d.confBookings||[]).forEach(b=>{confBookings[b.key]=b.name;});
+    (d.bookings||[]).forEach(b=>bookings[b.key]=b.name);
+    (d.confBookings||[]).forEach(b=>confBookings[b.key]=b.name);
     renderDesks();
     if(currentTab==='conf')renderConf();
-  }catch(e){
-    toast('Could not connect – working offline');
-    renderDesks();
-  }
+  }catch(e){toast('Could not connect – working offline');renderDesks();}
 }
 
 async function apiWrite(action,key,name){
-  try{
-    await fetch(`${API_URL}?action=${action}&key=${encodeURIComponent(key)}&name=${encodeURIComponent(name)}`);
-  }catch(e){toast('Could not save');}
+  try{await fetch(`${API_URL}?action=${action}&key=${encodeURIComponent(key)}&name=${encodeURIComponent(name)}`);}
+  catch(e){toast('Could not save');}
 }
 
 function getMonday(offset){
-  const d=new Date();
-  d.setHours(0,0,0,0);
+  const d=new Date();d.setHours(0,0,0,0);
   const day=d.getDay();
-  const diff=day===0?-6:1-day;
-  d.setDate(d.getDate()+diff+offset*7);
+  d.setDate(d.getDate()+(day===0?-6:1-day)+offset*7);
   return d;
 }
 function dateKey(base,i){
   const d=new Date(base);d.setDate(d.getDate()+i);
-  const y=d.getFullYear();
-  const m=String(d.getMonth()+1).padStart(2,'0');
-  const day=String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function formatWeek(mon){
   const fri=new Date(mon);fri.setDate(fri.getDate()+4);
@@ -171,7 +177,26 @@ function isToday(base,i){
   const d=new Date(base);d.setDate(d.getDate()+i);
   return d.toDateString()===new Date().toDateString();
 }
-function isAllowed(offset){return offset===0||offset===1;}
+function isAllowed(o){return o===0||o===1;}
+
+function renderOffice(room,ri,dk){
+  // slots: index = grid position (0=top-left,1=top-right,2=bottom-left,3=bottom-right)
+  // desk index in booking key matches slot order for 4-desk rooms
+  // office 5: positions 0,1,2 = top-left,top-right,bottom-left; position 3 = phantom
+  const slots = room.desks===4 ? [0,1,2,3] : [0,1,2,'x'];
+  let desksHtml='';
+  slots.forEach(deskIdx=>{
+    if(deskIdx==='x'){desksHtml+=`<div class="desk desk-phantom"></div>`;return;}
+    const bk=`${dk}_r${ri}_d${deskIdx}`;
+    const b=bookings[bk];
+    if(b){
+      desksHtml+=`<div class="desk desk-taken" style="background:${room.color};color:${room.tc};border-color:${room.color}" title="${b} – click to remove" onclick="openCancel('${bk}','${b}','${room.name} Desk ${deskIdx+1}')">${b.slice(0,2).toUpperCase()}</div>`;
+    }else{
+      desksHtml+=`<div class="desk desk-free" title="Free – click to book" onclick="openBook('${bk}','${room.name} Desk ${deskIdx+1}')"></div>`;
+    }
+  });
+  return `<div class="office-box"><div class="win ${room.window}"></div><div class="desks">${desksHtml}</div></div>`;
+}
 
 function renderDesks(){
   const mon=getMonday(weekOffset);
@@ -190,17 +215,7 @@ function renderDesks(){
     h+=`<div class="room-label"><span style="width:8px;height:8px;border-radius:50%;background:${room.color};display:inline-block;flex-shrink:0"></span>${room.name}</div>`;
     DAYS.forEach((_,di)=>{
       const dk=dateKey(mon,di);
-      h+=`<div class="cell">`;
-      for(let desk=0;desk<room.desks;desk++){
-        const bk=`${dk}_r${ri}_d${desk}`;
-        const b=bookings[bk];
-        if(b){
-          h+=`<div class="desk-slot desk-taken" style="background:${room.color};color:${room.tc}" title="${b}" onclick="openCancel('${bk}','${b}','${room.name} Desk ${desk+1}')">${b.slice(0,2).toUpperCase()}</div>`;
-        }else{
-          h+=`<div class="desk-slot desk-free" title="Free" onclick="openBook('${bk}','${room.name} Desk ${desk+1}')"></div>`;
-        }
-      }
-      h+='</div>';
+      h+=`<div class="cell">${renderOffice(room,ri,dk)}</div>`;
     });
   });
   document.getElementById('desk-grid').innerHTML=h;
@@ -213,8 +228,7 @@ function renderDesks(){
       total+=room.desks;
       for(let desk=0;desk<room.desks;desk++){if(bookings[`${dk}_r${ri}_d${desk}`])booked++;}
     });
-    const t=isToday(mon,di);
-    sh+=`<div class="stat${t?' today':''}"><div class="stat-num">${booked}/${total}</div><div class="stat-label">${d}${t?' · today':''}</div></div>`;
+    sh+=`<div class="stat${isToday(mon,di)?' today':''}"><div class="stat-num">${booked}/${total}</div><div class="stat-label">${d}${isToday(mon,di)?' · today':''}</div></div>`;
   });
   document.getElementById('stats-bar').innerHTML=sh;
 }
@@ -237,11 +251,9 @@ function renderConf(){
       const dk=dateKey(mon,di);
       const ck=`conf_${dk}_${time}`;
       const b=confBookings[ck];
-      if(b){
-        h+=`<div class="conf-slot conf-booked" onclick="openCancelConf('${ck}','${b}','${time}')">${b}</div>`;
-      }else{
-        h+=`<div class="conf-slot" onclick="openBookConf('${ck}','${time}')"></div>`;
-      }
+      h+=b
+        ?`<div class="conf-slot conf-booked" onclick="openCancelConf('${ck}','${b}','${time}')">${b}</div>`
+        :`<div class="conf-slot" onclick="openBookConf('${ck}','${time}')"></div>`;
     });
   });
   document.getElementById('conf-grid').innerHTML=h;
@@ -258,11 +270,9 @@ function switchTab(t,el){
 function changeWeek(d){
   const next=weekOffset+d;
   if(next<0||next>1){toast('Only current and next week are available');return;}
-  weekOffset=next;
-  renderDesks();
+  weekOffset=next;renderDesks();
   if(currentTab==='conf')renderConf();
 }
-
 function openBook(key,label){
   pending={type:'book',key,label};
   document.getElementById('modal-title').textContent='Book: '+label;
@@ -299,20 +309,17 @@ function openCancelConf(key,name,label){
 }
 function closeModal(){document.getElementById('modal').style.display='none';pending=null;}
 function bgClose(e){if(e.target===document.getElementById('modal'))closeModal();}
-
 async function confirmBook(){
   const name=document.getElementById('modal-name').value.trim();
   if(!name){toast('Please enter your name');return;}
   if(pending.type==='book'){
     bookings[pending.key]=name;
     await apiWrite('book',pending.key,name);
-    renderDesks();
-    toast('Desk booked!');
+    renderDesks();toast('Desk booked!');
   }else if(pending.type==='bookConf'){
     confBookings[pending.key]=name;
     await apiWrite('book',pending.key,name);
-    renderConf();
-    toast('Conference room reserved!');
+    renderConf();toast('Conference room reserved!');
   }
   closeModal();
 }
@@ -320,19 +327,15 @@ async function cancelBook(){
   if(pending.type==='cancel'){
     delete bookings[pending.key];
     await apiWrite('cancel',pending.key,'');
-    renderDesks();
-    toast('Booking removed');
+    renderDesks();toast('Booking removed');
   }else if(pending.type==='cancelConf'){
     delete confBookings[pending.key];
     await apiWrite('cancel',pending.key,'');
-    renderConf();
-    toast('Reservation removed');
+    renderConf();toast('Reservation removed');
   }
   closeModal();
 }
-
 document.getElementById('modal-name').addEventListener('keydown',e=>{if(e.key==='Enter')confirmBook();});
-
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
