@@ -47,7 +47,9 @@ h1{font-size:20px;font-weight:500;margin-bottom:1.5rem;display:flex;align-items:
 .desk-free:hover{background:#dbeeff;border-color:#378ADD}
 .desk-taken{cursor:pointer}
 .desk-taken:hover{opacity:0.72}
-.desk-phantom{background:transparent;border:none;pointer-events:none;cursor:default}
+.day-header.past{color:#bbb;background:#f9f9f9}
+.cell-past{background:#fafafa}
+.cell-past .office-box .win{background:#d8d8d8}
 
 /* Conference room */
 .conf-grid{display:grid;grid-template-columns:90px repeat(5,1fr);gap:0;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff}
@@ -161,7 +163,9 @@ async function apiWrite(action,key,name){
 function getMonday(offset){
   const d=new Date();d.setHours(0,0,0,0);
   const day=d.getDay();
-  d.setDate(d.getDate()+(day===0?-6:1-day)+offset*7);
+  // On weekend (Sat=6, Sun=0), start on next week
+  const weekendOffset=(day===6||day===0)?1:0;
+  d.setDate(d.getDate()+(day===0?-6:day===6?-5:1-day)+(offset+weekendOffset)*7);
   return d;
 }
 function dateKey(base,i){
@@ -177,12 +181,14 @@ function isToday(base,i){
   const d=new Date(base);d.setDate(d.getDate()+i);
   return d.toDateString()===new Date().toDateString();
 }
+function isPast(base,i){
+  const d=new Date(base);d.setDate(d.getDate()+i);
+  const today=new Date();today.setHours(0,0,0,0);
+  return d<today;
+}
 function isAllowed(o){return o===0||o===1;}
 
-function renderOffice(room,ri,dk){
-  // slots: index = grid position (0=top-left,1=top-right,2=bottom-left,3=bottom-right)
-  // desk index in booking key matches slot order for 4-desk rooms
-  // office 5: positions 0,1,2 = top-left,top-right,bottom-left; position 3 = phantom
+function renderOffice(room,ri,dk,past){
   const slots = room.desks===4 ? [0,1,2,3] : [0,1,2,'x'];
   let desksHtml='';
   slots.forEach(deskIdx=>{
@@ -190,9 +196,10 @@ function renderOffice(room,ri,dk){
     const bk=`${dk}_r${ri}_d${deskIdx}`;
     const b=bookings[bk];
     if(b){
-      desksHtml+=`<div class="desk desk-taken" style="background:${room.color};color:${room.tc};border-color:${room.color}" title="${b} – click to remove" onclick="openCancel('${bk}','${b}','${room.name} Desk ${deskIdx+1}')">${b.slice(0,2).toUpperCase()}</div>`;
+      const style=past?'background:#d0d0d0;color:#999;border-color:#d0d0d0':`background:${room.color};color:${room.tc};border-color:${room.color}`;
+      desksHtml+=`<div class="desk desk-taken" style="${style}" title="${b}${past?'':' – click to remove'}" ${past?'':`onclick="openCancel('${bk}','${b}','${room.name} Desk ${deskIdx+1}')"`}>${b.slice(0,2).toUpperCase()}</div>`;
     }else{
-      desksHtml+=`<div class="desk desk-free" title="Free – click to book" onclick="openBook('${bk}','${room.name} Desk ${deskIdx+1}')"></div>`;
+      desksHtml+=`<div class="desk${past?' desk-phantom':' desk-free'}" ${past?'':`title="Free – click to book" onclick="openBook('${bk}','${room.name} Desk ${deskIdx+1}')"`}></div>`;
     }
   });
   return `<div class="office-box"><div class="win ${room.window}"></div><div class="desks">${desksHtml}</div></div>`;
@@ -209,13 +216,15 @@ function renderDesks(){
   let h='<div class="day-header"></div>';
   DAYS.forEach((d,i)=>{
     const t=isToday(mon,i);
-    h+=`<div class="day-header${t?' today':''}">${d}<br><span style="font-size:10px">${new Date(dateKey(mon,i)).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'})}</span></div>`;
+    const p=isPast(mon,i);
+    h+=`<div class="day-header${t?' today':p?' past':''}">${d}<br><span style="font-size:10px">${new Date(dateKey(mon,i)).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'})}</span></div>`;
   });
   ROOMS.forEach((room,ri)=>{
     h+=`<div class="room-label"><span style="width:8px;height:8px;border-radius:50%;background:${room.color};display:inline-block;flex-shrink:0"></span>${room.name}</div>`;
     DAYS.forEach((_,di)=>{
       const dk=dateKey(mon,di);
-      h+=`<div class="cell">${renderOffice(room,ri,dk)}</div>`;
+      const p=isPast(mon,di);
+      h+=`<div class="cell${p?' cell-past':''}">${renderOffice(room,ri,dk,p)}</div>`;
     });
   });
   document.getElementById('desk-grid').innerHTML=h;
