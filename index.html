@@ -211,6 +211,7 @@ function nameMatchesCleaning(name,team){
 }
 
 let weekOffset=0,bookings={},absences=[],pending=null,currentTab='desks',selectedType='vacation';
+const congratsShown=new Set();
 const API_URL='https://script.google.com/macros/s/AKfycbzBCMFsfXLrL2SGKqMpiPLcLfeosfkq4hczsYRFfd37sSH34zxbY52rVRVK6o94Wr6DmQ/exec';
 loadBookings();
 
@@ -453,7 +454,8 @@ async function confirmBook(){
     // Check cleaning rota
     const mon=getMonday(weekOffset);
     const ct=getCleaningTeam(mon);
-    if(ct&&nameMatchesCleaning(name,ct.team)){
+    if(ct&&nameMatchesCleaning(name,ct.team)&&!congratsShown.has(name.toLowerCase())){
+      congratsShown.add(name.toLowerCase());
       closeModal();
       showCongrats(name,ct.team);
       return;
@@ -498,3 +500,4 @@ function toast(msg){
 </script>
 </body>
 </html>
+
